@@ -10,44 +10,7 @@ class App extends Component<MyProps, MyState> {
     super(props);
     this.state = {
       userName: "Sebastian",
-      todoItems: [
-        {
-          action: "Zrobić zakupy",
-          done: false,
-          description: "3 jajka, mąke, i sól kuchenna",
-          isModal: false,
-        },
-        {
-          action: "Umyć zęby",
-          done: false,
-          description: "Dokładnie szarować szczoteczką elektryczną",
-          isModal: false,
-        },
-        {
-          action: "Odkurzyć pokój",
-          done: true,
-          description: "Dodatkowo umyć podłogę",
-          isModal: false,
-        },
-        {
-          action: "Umyć okna ",
-          done: false,
-          description: "Dokładnie",
-          isModal: false,
-        },
-        {
-          action: "Pościelić łóżko",
-          done: true,
-          description: "Odrazu jak wstaniesz",
-          isModal: false,
-        },
-        {
-          action: "Pójść do sąsiadki",
-          done: false,
-          description: "Spytać czy w czymś pomóc",
-          isModal: false,
-        },
-      ],
+      todoItems: [],
       newTaskAction: "",
       newTaskDescription: "",
       itemsDone: true,
@@ -72,20 +35,22 @@ class App extends Component<MyProps, MyState> {
   createNewTask = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    this.setState({
-      todoItems: [
-        ...this.state.todoItems,
-        {
-          action: this.state.newTaskAction,
-          done: false,
-          description: this.state.newTaskDescription,
-          isModal: false,
-        },
-      ],
-      newTaskAction: "",
-      newTaskDescription: "",
-      itemsDone: this.state.itemsDone,
-    });
+    this.setState(
+      {
+        todoItems: [
+          ...this.state.todoItems,
+          {
+            action: this.state.newTaskAction,
+            done: false,
+            description: this.state.newTaskDescription,
+            isModal: false,
+          },
+        ],
+        newTaskAction: "",
+        newTaskDescription: "",
+      },
+      () => localStorage.setItem("todos", JSON.stringify(this.state.todoItems))
+    );
   };
   // editTask = (task:Todo) => {
   //   this.setState({
@@ -98,11 +63,14 @@ class App extends Component<MyProps, MyState> {
   // };
 
   toggleChange = (task: Todo) => {
-    this.setState({
-      todoItems: this.state.todoItems.map(item =>
-        item.action === task.action ? { ...item, done: !item.done } : item
-      ),
-    });
+    this.setState(
+      {
+        todoItems: this.state.todoItems.map(item =>
+          item.action === task.action ? { ...item, done: !item.done } : item
+        ),
+      },
+      () => localStorage.setItem("todos", JSON.stringify(this.state.todoItems))
+    );
   };
   editHandler = (task: Todo) => {
     this.setState({
@@ -112,49 +80,67 @@ class App extends Component<MyProps, MyState> {
     });
   };
   editTask = (action: string, actionEdit: string, descriptionEdit: string) => {
-    this.setState({
-      todoItems: this.state.todoItems.map(item =>
-        item.action === action
-          ? {
-              ...item,
-              action: actionEdit,
-              done: false,
-              description: descriptionEdit,
-              isModal: false,
-            }
-          : item
-      ),
-    });
+    this.setState(
+      {
+        todoItems: this.state.todoItems.map(item =>
+          item.action === action
+            ? {
+                action: actionEdit,
+                done: false,
+                description: descriptionEdit,
+                isModal: false,
+              }
+            : item
+        ),
+      },
+      () => localStorage.setItem("todos", JSON.stringify(this.state.todoItems))
+    );
   };
   changeMode = () => {
     this.setState({
       itemsDone: !this.state.itemsDone,
     });
-    console.log(this.state.itemsDone);
   };
 
   deleteTask = (array: Array<Todo>, action: string, description: string) => {
     let index = array.findIndex(x => x.action === action);
     array.splice(index, 1);
-    this.setState({
-      todoItems: [...array],
-    });
+    this.setState(
+      {
+        todoItems: [...array],
+      },
+      () => localStorage.setItem("todos", JSON.stringify(this.state.todoItems))
+    );
   };
-  searchHandler = (event: ChangeEvent<HTMLInputElement>) => {
-    let value = event.target.value;
-    const allTodos = this.state.todoItems;
-    Object.freeze(allTodos);
-    const todos = this.state.todoItems.filter(todo => {
-      return todo.action.toLowerCase().includes(value);
-    });
-    if (value === "") {
-      this.setState({
-        todoItems: allTodos,
-      });
-    }
-    this.setState({
-      todoItems: todos,
-    });
+  // searchHandler = (event: ChangeEvent<HTMLInputElement>) => {
+  //   let allTodos = localStorage.getItem("todos");
+
+  //   const todos = this.state.todoItems.filter(todo => {
+  //     return todo.action.toLowerCase().includes(event.target.value);
+  //   });
+
+  //   if (event.target.value === "") {
+  //     this.setState(
+  //       allTodos != null
+  //         ? {
+  //             todoItems: JSON.parse(allTodos),
+  //           }
+  //         : { todoItems: [...todos] }
+  //     );
+  //   }
+  //   this.setState({
+  //     todoItems: todos,
+  //   });
+  // };
+  componentDidMount = () => {
+    let data = localStorage.getItem("todos");
+    this.setState(
+      data != null
+        ? { todoItems: JSON.parse(data) }
+        : {
+            todoItems: [],
+          }
+    );
   };
 
   render(): React.ReactNode {
@@ -210,19 +196,30 @@ class App extends Component<MyProps, MyState> {
           </label>
         </div>
         {/* SEARCH BAR */}
-        <div className="">
+        {/* <div className="">
           <input
             placeholder="search..."
             className=" bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block m-auto p-2.5 my-5 dark:white dark:border-gray-600 dark:placeholder-gray-400 dark:text-black dark:focus:ring-blue-500 dark:focus:border-blue-500 focus:outline-none focus:border-transparent focus:ring-0"
             type="text"
             onChange={this.searchHandler}
           />
-        </div>
+        </div> */}
 
         <div>
           <h1 className="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white">
             {" "}
-            {this.state.itemsDone === true ? <>Do zrobienia</> : <> Wykonane</>}
+            {this.state.todoItems.length === 0 ? (
+              <>Brak Zadań</>
+            ) : (
+              <>
+                {" "}
+                {this.state.itemsDone === true ? (
+                  <>Do zrobienia</>
+                ) : (
+                  <> Wykonane</>
+                )}
+              </>
+            )}
             <br />
           </h1>
 
